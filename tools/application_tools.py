@@ -1,3 +1,4 @@
+import os
 import time
 import pygetwindow as gw
 
@@ -39,6 +40,7 @@ def open_applications(application_name: str) -> str:
         "github desktop": r"GitHubDesktop.exe",
         "postman": r"Postman.exe",
         "adobe photoshop": r"Photoshop.exe",
+        "teams":os.path.expandvars(r"C:\Users\saif\AppData\Local\Microsoft\WindowsApps\ms-teams.exe"),
     }
 
     all_apps = {
