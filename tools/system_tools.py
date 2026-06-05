@@ -30,7 +30,7 @@ def search_web(query: str) -> str:
     from langchain_community.utilities import GoogleSerperAPIWrapper
 
     search = GoogleSerperAPIWrapper(
-        serper_api_key="6c44008a273e5b7fc153bc877a7713e5a843daf9"
+        serper_api_key=""
     )
     result = search.run(query)
     return result
