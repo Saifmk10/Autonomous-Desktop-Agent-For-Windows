@@ -1,62 +1,12 @@
 import os
-import subprocess
-import time
-from playwright.sync_api import sync_playwright
+import webbrowser
 from langchain.tools import tool
-
-
-_playwright = None
-_browser = None
-_context = None
-_page = None
-
-
-def _get_page():
-    """Get or create the browser page by connecting to the user's existing Brave."""
-    global _playwright, _browser, _context, _page
-    if _page is None:
-        _playwright = sync_playwright().start()
-        user_data_dir = os.path.expandvars(
-            r"%LOCALAPPDATA%\BraveSoftware\Brave-Browser\User Data"
-        )
-
-        # Try connecting to an already-running Brave with debugging enabled
-        try:
-            _browser = _playwright.chromium.connect_over_cdp("http://localhost:9222")
-        except Exception:
-            # Kill existing Brave so we can relaunch with remote debugging on the real profile
-            subprocess.run(["taskkill", "/F", "/IM", "brave.exe"], 
-                         stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
-            time.sleep(1)
-
-            # Relaunch Brave with the user's real profile + remote debugging
-            subprocess.Popen([
-                r"C:\Program Files\BraveSoftware\Brave-Browser\Application\brave.exe",
-                f"--user-data-dir={user_data_dir}",
-                "--remote-debugging-port=9222",
-                "--restore-last-session",
-            ])
-
-            # Wait for Brave to be ready
-            for _ in range(10):
-                try:
-                    _browser = _playwright.chromium.connect_over_cdp("http://localhost:9222")
-                    break
-                except Exception:
-                    time.sleep(1)
-            else:
-                raise RuntimeError("Could not connect to Brave after 10 seconds")
-
-        _context = _browser.contexts[0]
-        _page = _context.pages[0] if _context.pages else _context.new_page()
-    return _page
 
 
 @tool
 def browser_navigate(url: str) -> str:
     """Navigate the browser to a URL."""
-    page = _get_page()
-    page.goto(url, wait_until="domcontentloaded")
+    webbrowser.open(url)
     return f"Navigated to {url}"
 
 

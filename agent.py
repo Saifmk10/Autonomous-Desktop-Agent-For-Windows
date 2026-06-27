@@ -5,6 +5,7 @@ from langchain_core.messages import HumanMessage, SystemMessage
 
 from tools.application_tools import open_applications , check_opened_applications
 from tools.browser_tools import browser_navigate , browser_click , browser_type , browser_press_key , browser_screenshot
+from tools.embedded_features import search_web
 import json , os
 from dotenv import load_dotenv
 
@@ -22,7 +23,7 @@ class State (TypedDict):
     task: dict
     message : str
     application_name : str
-    route: str
+    route: str # says the agent whats the applciation that needs to be run 
 
 
 # node to open application witin the system
@@ -36,6 +37,20 @@ def applications(state : State):
         "application_name": application_name
     }
 
+
+# search feature where the agent dont have to open any browser to search for any inforamtion
+def search(state:State):
+    # application_name = state["application_name"]
+    query = state["application_name"]
+    result = search_web.invoke({"query" : query})
+    return {
+        "agent": "search",
+        "task": state["task"],
+        "message": result,
+        "application_name": query
+    }
+
+
 # node for the browser , contains all the tools that are needed for browser operation 
 def browser(state : State):
     query = state["application_name"]
@@ -46,7 +61,6 @@ def browser(state : State):
         url = f"https://www.google.com/search?q={query}"
 
     browser_navigate.invoke({"url": url})
-    browser_screenshot.invoke({"path": "workspace"})
     return {    
         "agent": "browser",
         "task": state["task"],
@@ -54,11 +68,13 @@ def browser(state : State):
         "application_name": state["application_name"]
     }
 
+
+
 # used to route the applciation 
 def router(state:State):
     response = llm.invoke(
         [
-            SystemMessage(content='Reply ONLY with JSON: {"type":"app" or "browser","name":"<lowercase name or search query>"}. Apps: notepad,calculator,paint,word,excel,spotify,vlc,discord,teams,brave,chrome,edge,firefox. If the user wants to search or browse something online, set type to "browser" and set name to the full search query (e.g. "cat pics"). If they want to open a specific website, set name to the URL.'),
+            SystemMessage(content='Reply ONLY with JSON: {"type":"applications" or "browser" or "search","name":"<lowercase name or search query>"}. Apps: notepad,calculator,paint,word,excel,spotify,vlc,discord,teams,brave,chrome,edge,firefox. If the user wants to open a desktop application, set type to "applications". If the user wants to visually browse or watch something online, set type to "browser" and set name to the full search query (e.g. "cat pics"). If they want to open a specific website, set type to "browser" and set name to the URL. If the user asks a factual question or wants a quick text answer without opening anything, set type to "search" and set name to the search query.'),
             HumanMessage(content=state['task'])
         ]
     )
@@ -68,16 +84,24 @@ def router(state:State):
         route = parsed["type"]
         application_name = parsed["name"]
     except (json.JSONDecodeError, KeyError):
-        route = "app"
+        route = "applications"
         application_name = response.content.strip().lower()
 
     print(f"FROM ROUTER --> {route}: {application_name}")
     return {"application_name": application_name, "route": route}
 
 
+
 def route_decision(state: State) -> str:
     """Conditional edge: route to 'applications' or 'browser'."""
-    return "browser" if state.get("route") == "browser" else "applications"
+    # return "browser" if state.get("route") == "browser" else "applications"
+
+    if state.get("route") == "browser":
+        return "browser"
+    elif state.get("route") == "applications":
+        return "applications"
+    else:
+        return "search" 
 
 
 workflow = StateGraph(State)
@@ -85,13 +109,17 @@ workflow = StateGraph(State)
 workflow.add_node("router" , router)
 workflow.add_node("applications" , applications)
 workflow.add_node("browser" , browser)
+workflow.add_node("search" , search)
+# workflow.add_node("app_check" , check_opened_applications)
 
 
 # edge is the flow on how the agent will be executed
 workflow.add_edge(START, "router")
-workflow.add_conditional_edges("router", route_decision, {"applications": "applications", "browser": "browser"})
+workflow.add_conditional_edges("router", route_decision, {"applications": "applications", "browser": "browser" , "search":"search"})
 workflow.add_edge("applications" , END)
 workflow.add_edge("browser" , END)
+workflow.add_edge("search" , END)
+# workflow.add_edge("app_check" , END)
 graph = workflow.compile()
 
 if __name__ == "__main__":

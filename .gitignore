@@ -3,3 +3,5 @@ venv
 sample.py
 
 .env
+
+__pycache__/
