@@ -3,7 +3,12 @@ import time
 
 from langchain.tools import tool
 from langchain_community.agent_toolkits import FileManagementToolkit
+from dotenv import load_dotenv
+import os
 
+load_dotenv()
+
+key = os.getenv("GOOGLE_SERPER_TOKEN")
 
 @tool
 def run_terminal(command: str) -> str:
@@ -30,7 +35,7 @@ def search_web(query: str) -> str:
     from langchain_community.utilities import GoogleSerperAPIWrapper
 
     search = GoogleSerperAPIWrapper(
-        serper_api_key="6c44008a273e5b7fc153bc877a7713e5a843daf9"
+        serper_api_key=key
     )
     result = search.run(query)
     return result
