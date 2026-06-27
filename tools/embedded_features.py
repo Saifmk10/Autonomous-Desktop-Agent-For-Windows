@@ -8,7 +8,7 @@ import os
 
 load_dotenv()
 
-key = os.getenv("GOOGLE_SERPER_TOKEN")
+key = os.getenv("SERPER_API_KEY")
 
 @tool
 def run_terminal(command: str) -> str:
