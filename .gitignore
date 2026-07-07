@@ -5,3 +5,8 @@ sample.py
 .env
 
 __pycache__/
+
+# mcp_testing.py
+
+.playwright-mcp
+anthropic_api.py
