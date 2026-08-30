@@ -1,4 +1,3 @@
-# the main objective is to create a web automation system where users can ask the agent to do something the the agent will the able to execute everything
 
 
 import asyncio
@@ -6,30 +5,15 @@ from langchain.tools import tool
 from mcp import ClientSession, StdioServerParameters, types
 from mcp.client.stdio import stdio_client
 from mcp.shared.context import RequestContext
-from langchain_google_genai import ChatGoogleGenerativeAI
-
-from langchain.agents import create_agent
-import os
-from dotenv import load_dotenv
-
-load_dotenv()
-
-
-llm = ChatGoogleGenerativeAI(
-    model="models/gemini-3.1-pro-preview",
-    google_api_key=os.getenv("GOOGLE_API_KEY")
-)
-
-# response = llm.invoke("Hello")
-
-# print(response)
 
 # this is the server param that needs to be provided to the mcp client so it can be accessable
-server_params = StdioServerParameters(
-    command="npx",
-    args=["@playwright/mcp@latest"],
-)
 
+@tool
+def start_playwright_server():
+    server_params = StdioServerParameters( 
+        command="npx",
+        args=["@playwright/mcp@latest"],
+    )
 
 
 async def run():
@@ -84,35 +68,5 @@ def main():
     asyncio.run(run())
 
 
-def agent():
-
-    working_agent = create_agent(
-        model = llm,
-        system_prompt = "You are an expert in planning things. You need to provide the user with a sloid plan on executing the task that as user request for. provide the list of plans with proper numbering. Keep the response short, each step needs to be a one liner only",
-    )
-
-    result = working_agent.invoke(
-        {
-            "messages" : [
-                {
-                    "role" : "user", 
-                    "content" : "i want to buy a bmw by exchanging my ford for a decent price"
-                }
-            ]
-        }
-    )
-
-    print(result)
-
-    token_usage = result["messages"][-1]
-
-    print("TOKEN USAGE:" , token_usage.usage_metadata["output_tokens"])
-
-
-
-
-
-
 if __name__ == "__main__":
-    # agent()
     main()
