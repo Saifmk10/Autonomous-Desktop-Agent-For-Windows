@@ -5,6 +5,12 @@ description = "Add your description here"
 readme = "README.md"
 requires-python = ">=3.12"
 dependencies = [
+    "comtypes>=1.4.16",
+    "pyautogui>=0.9.54",
+    "pycaw>=20251023",
     "pydantic>=2.13.4",
+    "pygetwindow>=0.0.9",
+    "pyperclip>=1.11.0",
+    "pywinauto>=0.6.9",
     "stagehand>=4.0.0",
 ]
